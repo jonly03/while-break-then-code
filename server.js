@@ -13,8 +13,6 @@ let PORT = process.env.PORT;
 let IP = process.env.IP;
 
 
-
-
 app.post("/users", jsonParser, (req, res) =>{
   if (!req.body || !req.body.username) return res.status(404).json({message:"The payload has to have a username"});
   
@@ -66,4 +64,19 @@ app.get("/users/:username", (req, res) =>{
   
 })
 
-app.listen(PORT, IP);
+let server = app.listen(PORT, IP, () => {
+  console.log(`Listenning at ${IP}: ${PORT}`);
+});
+
+// SOCKET IO
+let io = require("socket.io").listen(server);
+
+// When clients connect, go crawl freecodecamp.org 
+// For profile updates of users and broadcast them to all connected sockets
+io.on('connection', (socket) =>{
+  console.log("Client connected");
+  
+  socket.on('disconnect', () =>{
+    console.log("Client disconnected");
+  })
+})
