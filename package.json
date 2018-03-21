@@ -1,0 +1,29 @@
+{
+  "name": "whilebreakthencode",
+  "version": "1.0.0",
+  "description": "Back end to UCDCompete",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jonly03/while-break-then-code.git"
+  },
+  "author": "Nelly Sugu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jonly03/while-break-then-code/issues"
+  },
+  "homepage": "https://github.com/jonly03/while-break-then-code#readme",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "cheerio": "^1.0.0-rc.2",
+    "express": "^4.16.3",
+    "firebase-admin": "^5.11.0",
+    "nodemon": "^1.17.2",
+    "request": "^2.85.0",
+    "request-promise": "^4.2.2"
+  }
+}
