@@ -1,3 +1,5 @@
+
+
 let express = require("express");
 let bodyParser = require("body-parser");
 
@@ -12,6 +14,12 @@ let jsonParser = bodyParser.json();
 let PORT = process.env.PORT;
 let IP = process.env.IP;
 
+// Enable CORS
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 app.post("/users", jsonParser, (req, res) =>{
   if (!req.body || !req.body.username) return res.status(404).json({message:"The payload has to have a username"});
@@ -64,19 +72,35 @@ app.get("/users/:username", (req, res) =>{
   
 })
 
+app.get('/', function(req, res){
+  res.sendFile(__dirname + '/index.html');
+});
+
 let server = app.listen(PORT, IP, () => {
   console.log(`Listenning at ${IP}: ${PORT}`);
 });
 
 // SOCKET IO
-let io = require("socket.io").listen(server);
+// let io = require("socket.io").listen(server);
 
-// When clients connect, go crawl freecodecamp.org 
-// For profile updates of users and broadcast them to all connected sockets
-io.on('connection', (socket) =>{
-  console.log("Client connected");
+// // When clients connect, go crawl freecodecamp.org 
+// // For profile updates of users and broadcast them to all connected sockets
+// io.on('connection', (client) =>{
   
-  socket.on('disconnect', () =>{
-    console.log("Client disconnected");
-  })
-})
+//   client.on("crawling", async function(data){
+  
+//     await Crawler.crawl();
+    
+//     // Listen to users profiles update and let our clients know
+//     await firebaseDB.ref('/users').on('value', (snap) =>{
+//       let updatedProfiles = snap.val();
+//       client.emit("done_crawling", updatedProfiles); // Send profiles back to calling client
+//       client.broadcast.emit("done_crawling", updatedProfiles); // Send profiles to all other listening clients
+//     })
+    
+//   });
+  
+//   client.on('disconnect', () =>{
+//     console.log("disconnected");
+//   })
+// })
