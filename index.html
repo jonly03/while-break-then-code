@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript" src='/socket.io/socket.io.js'></script>
+</head>
+<body>
+	<script type="text/javascript">
+		var socket = io();
+
+		socket.emit("crawling", "Hello");
+		
+		socket.on("done_crawling", function(data){
+		    console.log(data);
+		})
+
+
+	</script>
+
+</body>
+</html>
+
