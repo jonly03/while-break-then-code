@@ -5,8 +5,9 @@ let bodyParser = require("body-parser");
 
 let firebaseDB = require("./Firebase");
 let Crawler = require("./Crawler");
-
 let Helper = require("./Helpers");
+
+let CronJob = require("cron").CronJob;
 
 let app = express();
 
@@ -74,43 +75,63 @@ app.get("/users/:username", (req, res) =>{
   
 })
 
-app.get('/', function(req, res){
-  res.set('Content-Type', 'text/html'); // 'text/html' => mime type
-  res.sendFile(__dirname + '/index.html');
-});
+// app.get('/', function(req, res){
+//   res.set('Content-Type', 'text/html'); // 'text/html' => mime type
+//   res.sendFile(__dirname + '/index.html');
+// });
 
 let server = app.listen(PORT, IP, () => {
   console.log(`Listenning at ${IP}: ${PORT}`);
 });
 
-//SOCKET IO
-let io = require("socket.io").listen(server);
-
-// When clients connect, go crawl freecodecamp.org 
-// For profile updates of users and broadcast them to all connected sockets
-io.on('connection', (client) =>{
-  console.log("client connected");
-  client.on("crawling", async function(data){
-  
+// Use a Cron job to crawl the fcc for our user profile updates every 15 minutes
+let crawlJob = new CronJob({
+  cronTime: '*/15 * * * *',
+  onTick: function(){
+    console.log("Running crawling job...");
+    
     Crawler.crawl()
       .then(() => {
-        // Listen to users profiles update and let our clients know
-        firebaseDB.ref('/users').on('value', (snap) =>{
-          let updatedProfiles = Helper.getUsersArray(snap.val());
-          
-          // Send profiles back to calling client
-          client.emit("done_crawling", updatedProfiles);
-          
-          // Send profiles to all other listening clients
-          client.broadcast.emit("done_crawling", updatedProfiles); 
-        })
+       // Do nothing really
+       console.log("Done crawling and updating the DB")
       })
       .catch((error) =>{
         console.log(error);
       })
-  });
-  
-  client.on('disconnect', () =>{
-    console.log("disconnected");
-  })
+  },
+  start: true,
+  timeZone: 'America/Los_Angeles'
 })
+
+
+// //SOCKET IO
+// let io = require("socket.io").listen(server);
+
+// // When clients connect, go crawl freecodecamp.org 
+// // For profile updates of users and broadcast them to all connected sockets
+// io.on('connection', (client) =>{
+//   console.log("client connected");
+//   client.on("crawling", async function(data){
+  
+//     Crawler.crawl()
+//       .then(() => {
+//         // Listen to users profiles update and let our clients know
+//         firebaseDB.ref('/users').on('value', (snap) =>{
+//           let updatedProfiles = Helper.getUsersArray(snap.val());
+          
+//           // Send profiles back to calling client
+//           client.emit("done_crawling", updatedProfiles);
+          
+//           // Send profiles to all other listening clients
+//           client.broadcast.emit("done_crawling", updatedProfiles); 
+//         })
+//       })
+//       .catch((error) =>{
+//         console.log(error);
+//       })
+//   });
+  
+//   client.on('disconnect', () =>{
+//     console.log("disconnected");
+//   })
+// })
