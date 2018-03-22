@@ -6,6 +6,8 @@ let bodyParser = require("body-parser");
 let firebaseDB = require("./Firebase");
 let Crawler = require("./Crawler");
 
+let Helper = require("./Helpers");
+
 let app = express();
 
 let jsonParser = bodyParser.json();
@@ -46,25 +48,11 @@ app.post("/users", jsonParser, (req, res) =>{
     })
 })
 
-
-
 app.get("/users", (req, res) =>{
   let ref = firebaseDB.ref("/users");
   ref.once("value")
     .then(snap =>{
-      // Format data object into array of users to send to client
-      let data = snap.val();
-      let users = [];
-      let keys = Object.keys(data);
-      
-      for (let i=0; i < keys.length; i++){
-        console.log("in")
-        var user = data[keys[i]];
-        user.username = keys[i];
-        users.push(user);
-      }
-        
-      return res.send(users);
+      return res.send(Helper.getUsersArray(snap.val()));
     })
     .catch(error => {
       return res.status(404).send(error);
