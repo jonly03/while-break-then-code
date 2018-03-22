@@ -1,5 +1,6 @@
 let rp = require("request-promise");
 let cheerio = require("cheerio");
+let firebaseDB = require("../Firebase");
 
 let fccPath = "https://www.freecodecamp.org/";
 
@@ -16,20 +17,29 @@ function userExists(htmlString){
     return res;
 }
 
-module.exports.getUserProfile = function (username){
-    return rp(fccPath + username);
+function getProfiles(profiles, usernames){
+    return new Promise ((resolve, reject) => {
+        usernames.forEach(async username => {
+            // Assume our users have fcc public profiles
+            // Todo: Check if they don't and delete their info from firebase
+            let htmlString = await rp(fccPath + username);
+            let $ = cheerio.load(htmlString);
+            
+            profiles[username] = {};
+            profiles[username] = Object.assign({}, constructUserProfile($));
+            if (Object.keys(profiles).length === usernames.length){
+                
+                // Update firebase with new profiles
+                firebaseDB.ref('/users').set(profiles)
+                    .then(() => resolve())
+                    .catch(error => reject(error))
+            }
+        })
+    })
+    
 }
 
-module.exports.parseWebPage = function (htmlString){
-    let res = userExists(htmlString);
-    if (res.error){
-        return {
-            error: 404,
-            message: res.error
-        }
-    }
-    
-    let $ = res.$;
+function constructUserProfile($){
     // User info is divided into 7 sections
     // 0. Profile picture <img src=link>
     // 1. Social media links in <h1><a href=githubLink></a><a href=linkedinLink></a></h1>
@@ -46,5 +56,38 @@ module.exports.parseWebPage = function (htmlString){
         location: $(userInfo[3]).text(),
         score: $(userInfo[4]).text().replace("[", "").replace("]", "").trim()
     }
+}
+
+module.exports.getUserProfile = function (username){
+    return rp(fccPath + username);
+}
+
+module.exports.parseWebPage = function (htmlString){
+    let res = userExists(htmlString);
+    if (res.error){
+        return {
+            error: 404,
+            message: res.error
+        }
+    }
     
+    return constructUserProfile(res.$);
+}
+
+module.exports.crawl = function (){
+    return new Promise((resolve, reject) => {
+        // Get all users from firebase
+        let ref = firebaseDB.ref("/users");
+        
+        // Crawl freecodecamp.org to parse user's profile info
+        ref.once("value")
+            .then( async snap => {
+                let profiles = {}
+                await getProfiles(profiles, Object.keys(snap.val()))
+                resolve();
+            })
+            .catch( error =>{
+                reject(error);
+            })  
+    })
 }
