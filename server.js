@@ -36,7 +36,9 @@ app.post("/users", jsonParser, (req, res) =>{
       let ref = firebaseDB.ref("/users")
       ref.child(username).set(data)
       .then( () => {
-        return res.status(200).json(data);
+        let dataArray = [];
+        dataArray.push(data);
+        return res.status(200).json(dataArray);
       })
       
     })
@@ -80,7 +82,7 @@ let server = app.listen(PORT, IP, () => {
   console.log(`Listenning at ${IP}: ${PORT}`);
 });
 
-// SOCKET IO
+//SOCKET IO
 // let io = require("socket.io").listen(server);
 
 // // When clients connect, go crawl freecodecamp.org 
@@ -89,15 +91,15 @@ let server = app.listen(PORT, IP, () => {
   
 //   client.on("crawling", async function(data){
   
-//     await Crawler.crawl();
-    
-//     // Listen to users profiles update and let our clients know
-//     await firebaseDB.ref('/users').on('value', (snap) =>{
-//       let updatedProfiles = snap.val();
-//       client.emit("done_crawling", updatedProfiles); // Send profiles back to calling client
-//       client.broadcast.emit("done_crawling", updatedProfiles); // Send profiles to all other listening clients
-//     })
-    
+//     Crawler.crawl()
+//       .then(() => {
+//         // Listen to users profiles update and let our clients know
+//         firebaseDB.ref('/users').on('value', (snap) =>{
+//           let updatedProfiles = snap.val();
+//           client.emit("done_crawling", updatedProfiles); // Send profiles back to calling client
+//           client.broadcast.emit("done_crawling", updatedProfiles); // Send profiles to all other listening clients
+//         })
+//       }) 
 //   });
   
 //   client.on('disconnect', () =>{
