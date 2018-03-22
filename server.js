@@ -36,9 +36,7 @@ app.post("/users", jsonParser, (req, res) =>{
       let ref = firebaseDB.ref("/users")
       ref.child(username).set(data)
       .then( () => {
-        let dataArray = [];
-        dataArray.push(data);
-        return res.status(200).json(dataArray);
+        return res.status(200).json(data);
       })
       
     })
@@ -48,11 +46,25 @@ app.post("/users", jsonParser, (req, res) =>{
     })
 })
 
+
+
 app.get("/users", (req, res) =>{
   let ref = firebaseDB.ref("/users");
   ref.once("value")
     .then(snap =>{
-      return res.send(snap.val());
+      // Format data object into array of users to send to client
+      let data = snap.val();
+      let users = [];
+      let keys = Object.keys(data);
+      
+      for (let i=0; i < keys.length; i++){
+        console.log("in")
+        var user = data[keys[i]];
+        user.username = keys[i];
+        users.push(user);
+      }
+        
+      return res.send(users);
     })
     .catch(error => {
       return res.status(404).send(error);
