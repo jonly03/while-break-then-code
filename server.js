@@ -86,7 +86,7 @@ let server = app.listen(PORT, IP, () => {
 
 // Use a Cron job to crawl the fcc for our user profile updates every 15 minutes
 let crawlJob = new CronJob({
-  cronTime: '*/15 * * * *',
+  cronTime: '*/1 * * * *',
   onTick: function(){
     console.log("Running crawling job...");
     
