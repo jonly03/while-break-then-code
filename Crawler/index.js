@@ -17,8 +17,10 @@ function userExists(htmlString){
     return res;
 }
 
-function getProfiles(profiles, usernames){
+function getProfiles(profiles, usersObject){
     return new Promise ((resolve, reject) => {
+        let usernames = Object.keys(usersObject);
+        
         usernames.forEach(async username => {
             // Assume our users have fcc public profiles
             // Todo: Check if they don't and delete their info from firebase
@@ -26,7 +28,10 @@ function getProfiles(profiles, usernames){
             let $ = cheerio.load(htmlString);
             
             profiles[username] = {};
-            profiles[username] = Object.assign({}, constructUserProfile($));
+            profiles[username] = Object.assign(
+                {}, 
+                constructNewUserProfile($, usersObject[username])
+            );
             if (Object.keys(profiles).length === usernames.length){
                 
                 // Update firebase with new profiles
@@ -39,7 +44,7 @@ function getProfiles(profiles, usernames){
     
 }
 
-function constructUserProfile($){
+function constructNewUserProfile($, prevUserProfile){
     // User info is divided into 7 sections
     // 0. Profile picture <img src=link>
     // 1. Social media links in <h1><a href=githubLink></a><a href=linkedinLink></a></h1>
@@ -49,12 +54,27 @@ function constructUserProfile($){
     // 5. Score
     // 6. Row of accomplishments
     let userInfo = $(".bio").siblings();
+    let profile_pic = $(userInfo[0]).attr("src");
+    let name = $(userInfo[2]).text();
+    let location = $(userInfo[3]).text();
+    let score = $(userInfo[4]).text().replace("[", "").replace("]", "").trim();
+
+    let scores = prevUserProfile ? prevUserProfile.scores : [];
+    
+    let currScore = {
+        time: Date.now(),
+        score
+    }
+    scores.push(currScore);
+    
+    console.log(scores);
     
     return {
-        profile_pic: $(userInfo[0]).attr("src"),
-        name: $(userInfo[2]).text(),
-        location: $(userInfo[3]).text(),
-        score: $(userInfo[4]).text().replace("[", "").replace("]", "").trim()
+        profile_pic,
+        name,
+        location,
+        score,
+        scores,
     }
 }
 
@@ -71,7 +91,7 @@ module.exports.parseWebPage = function (htmlString){
         }
     }
     
-    return constructUserProfile(res.$);
+    return constructNewUserProfile(res.$);
 }
 
 module.exports.crawl = function (){
@@ -83,7 +103,7 @@ module.exports.crawl = function (){
         ref.once("value")
             .then( async snap => {
                 let profiles = {}
-                await getProfiles(profiles, Object.keys(snap.val()))
+                await getProfiles(profiles, snap.val())
                 resolve();
             })
             .catch( error =>{

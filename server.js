@@ -82,18 +82,28 @@ app.get("/users/:username", (req, res) =>{
 
 let server = app.listen(PORT, IP, () => {
   console.log(`Listenning at ${IP}: ${PORT}`);
+  
+  // For testing purpose without having to wait for the cron job
+  // Crawler.crawl()
+  //   .then(() => {
+  //   // Do nothing really
+  //   console.log("Done crawling and updating the DB")
+  //   })
+  //   .catch((error) =>{
+  //     console.log(error);
+  //   })
 });
 
 // Use a Cron job to crawl the fcc for our user profile updates every 15 minutes
 let crawlJob = new CronJob({
-  cronTime: '*/15 * * * *',
+  cronTime: '*/1 * * * *',
   onTick: function(){
     console.log("Running crawling job...");
     
     Crawler.crawl()
       .then(() => {
-       // Do nothing really
-       console.log("Done crawling and updating the DB")
+      // Do nothing really
+      console.log("Done crawling and updating the DB")
       })
       .catch((error) =>{
         console.log(error);
