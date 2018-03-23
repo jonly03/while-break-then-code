@@ -66,9 +66,6 @@ function constructNewUserProfile($, prevUserProfile){
         score
     }
     scores.push(currScore);
-    
-    console.log(scores);
-    
     return {
         profile_pic,
         name,
