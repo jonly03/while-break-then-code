@@ -6,6 +6,7 @@ let bodyParser = require("body-parser");
 let firebaseDB = require("./Firebase");
 let Crawler = require("./Crawler");
 let Helper = require("./Helpers");
+let Middleware = require("./Middleware");
 
 let CronJob = require("cron").CronJob;
 
@@ -18,11 +19,7 @@ let PORT = process.env.PORT;
 let IP = process.env.IP;
 
 // Enable CORS
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
+app.use(Middleware.enableCORS);
 
 app.post("/users", jsonParser, (req, res) =>{
   if (!req.body || !req.body.username) return res.status(404).json({message:"The payload has to have a username"});
@@ -74,6 +71,78 @@ app.get("/users/:username", (req, res) =>{
     })
   
 })
+
+app.get("/users/span/from/:startTime", Middleware.timeValidation, (req, res) =>{
+  let { startTime } = req.params;
+  
+  firebaseDB.ref('/users').once('value')
+    .then(snap => {
+      let users = snap.val();
+      
+      let usersArray = Helper.getUsersArray(snap.val());
+      
+      let filteredUsers = Helper.filterUsers(
+        usersArray, 
+        "from", 
+        {from: startTime}
+      );
+      
+      return res.send(filteredUsers);
+      
+    })
+    .catch(error => {
+      return res.status(500).json(error);
+    })
+});
+
+app.get("/users/span/to/:endTime", Middleware.timeValidation, (req, res) =>{
+  let { endTime } = req.params;
+  
+  firebaseDB.ref('/users').once('value')
+    .then(snap => {
+      let users = snap.val();
+      
+      let usersArray = Helper.getUsersArray(snap.val());
+      
+      let filteredUsers = Helper.filterUsers(
+        usersArray, 
+        "to", 
+        {to: endTime}
+      );
+      
+      return res.send(filteredUsers);
+      
+    })
+    .catch(error => {
+      return res.status(500).json(error);
+    })
+});
+
+app.get("/users/span/from/:startTime/to/:endTime", Middleware.timeValidation, (req, res) =>{
+  let { startTime, endTime } = req.params;
+  
+  firebaseDB.ref('/users').once('value')
+    .then(snap => {
+      let users = snap.val();
+      
+      let usersArray = Helper.getUsersArray(snap.val());
+      
+      let filteredUsers = Helper.filterUsers(
+        usersArray,
+        "span", 
+        {from: startTime, to: endTime}
+      );
+      
+      return res.send(filteredUsers);
+      
+    })
+    .catch(error => {
+      return res.status(500).json(error);
+    })
+  
+});
+
+
 
 // app.get('/', function(req, res){
 //   res.set('Content-Type', 'text/html'); // 'text/html' => mime type
