@@ -36,8 +36,10 @@ function getProfiles(profiles, usersObject){
                 
                 // Update firebase with new profiles
                 firebaseDB.ref('/users').set(profiles)
-                    .then(() => resolve())
-                    .catch(error => reject(error))
+                    .catch(error => reject(error));
+                    
+                resolve(profiles);
+                    
             }
         })
     })
@@ -100,8 +102,8 @@ module.exports.crawl = function (){
         ref.once("value")
             .then( async snap => {
                 let profiles = {}
-                await getProfiles(profiles, snap.val())
-                resolve();
+                let newProfiles = await getProfiles(profiles, snap.val())
+                resolve(newProfiles);
             })
             .catch( error =>{
                 reject(error);

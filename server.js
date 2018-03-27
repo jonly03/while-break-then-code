@@ -141,12 +141,6 @@ app.get("/users/span/from/:startTime/to/:endTime", Middleware.timeValidation, (r
 });
 
 
-
-// app.get('/', function(req, res){
-//   res.set('Content-Type', 'text/html'); // 'text/html' => mime type
-//   res.sendFile(__dirname + '/index.html');
-// });
-
 let server = app.listen(PORT, IP, () => {
   console.log(`Listenning at ${IP}: ${PORT}`);
   
@@ -161,6 +155,14 @@ let server = app.listen(PORT, IP, () => {
   //   })
 });
 
+//SOCKET IO
+let io = require("socket.io").listen(server);
+let client;
+
+io.on('connection', (socket) => {
+  client = socket;
+})
+
 // Use a Cron job to crawl the fcc for our user profile updates every 15 minutes
 let crawlJob = new CronJob({
   cronTime: '*/15 * * * *',
@@ -168,9 +170,17 @@ let crawlJob = new CronJob({
     console.log("Running crawling job...");
     
     Crawler.crawl()
-      .then(() => {
-      // Do nothing really
-      console.log("Done crawling and updating the DB")
+      .then((newProfiles) => {
+        
+        if (client){
+        
+          // Notify listening clients with new profiles and disconnect
+          client.emit("doneCrawling", Helper.getUsersArray(newProfiles));
+          client.broadcast.emit("doneCrawling", Helper.getUsersArray(newProfiles));
+          
+          console.log("Done running crawling job...");
+        }
+      
       })
       .catch((error) =>{
         console.log(error);
@@ -179,36 +189,3 @@ let crawlJob = new CronJob({
   start: true,
   timeZone: 'America/Los_Angeles'
 })
-
-
-// //SOCKET IO
-// let io = require("socket.io").listen(server);
-
-// // When clients connect, go crawl freecodecamp.org 
-// // For profile updates of users and broadcast them to all connected sockets
-// io.on('connection', (client) =>{
-//   console.log("client connected");
-//   client.on("crawling", async function(data){
-  
-//     Crawler.crawl()
-//       .then(() => {
-//         // Listen to users profiles update and let our clients know
-//         firebaseDB.ref('/users').on('value', (snap) =>{
-//           let updatedProfiles = Helper.getUsersArray(snap.val());
-          
-//           // Send profiles back to calling client
-//           client.emit("done_crawling", updatedProfiles);
-          
-//           // Send profiles to all other listening clients
-//           client.broadcast.emit("done_crawling", updatedProfiles); 
-//         })
-//       })
-//       .catch((error) =>{
-//         console.log(error);
-//       })
-//   });
-  
-//   client.on('disconnect', () =>{
-//     console.log("disconnected");
-//   })
-// })
